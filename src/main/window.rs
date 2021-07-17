@@ -1,25 +1,21 @@
 use std::sync::atomic::{AtomicUsize,Ordering};
 use std::sync::Arc;
 // fltk's
-use fltk::text::TextBuffer;
-use fltk::app;
 use fltk::prelude::*;
+use fltk::app;
+use fltk::dialog;
 use fltk::window::*;
 use fltk::menu::*;
-use fltk::enums::Color;
-use fltk::enums::Shortcut;
-use fltk::enums::FrameType;
-use fltk::group::{Tabs,Group};
-use fltk::group::Scroll;
-use fltk::frame::Frame;
 use fltk::app::Scheme;
-use fltk::enums::Event;
-use fltk::dialog::{FileChooser,FileChooserType,NativeFileChooser,NativeFileChooserType,FileDialogType};
-use fltk::dialog;
 use fltk::button::Button;
+use fltk::text::TextBuffer;
+use fltk::group::{Tabs,Group,Tile,Scroll};
+use fltk::enums::{Color,Shortcut,FrameType,Event};
+use fltk::dialog::{FileChooser,FileChooserType,NativeFileChooser,NativeFileChooserType,FileDialogType};
 //########################################################
 pub mod lay_editor;
 pub mod lay_menubar;
+pub mod lay_version;
 //###########################################################################################
 pub struct LayText{
     tabcount:  i32,
@@ -39,8 +35,7 @@ impl LayText{
         app::foreground(200,200,200);
         let mut window = OverlayWindow::new(0, 0, 900, 600, "Lay Text").center_screen();
         window.set_color(Color::from_rgb(24,25,21));
-        window.make_resizable(true);   
-
+        // window.make_resizable(true);
         Self {
             tabcount:      0,
             receive:       r,
@@ -57,17 +52,18 @@ impl LayText{
         // Menu Bar Setting ################################
         let _menu = lay_menubar::LayMenuBar::new(&self.send);
 
-        let mut tabs = Tabs::new(10,35,880,550,"");
+        let mut tabs = Tabs::new(10,35,890,550,"");
         tabs.set_label_color(Color::from_rgb(255,255,255));
         tabs.set_selection_color(Color::from_rgb(40,41,35));
         tabs.set_frame(FrameType::FlatBox);
-        tabs.make_resizable(true);
+
         self.window.resizable(&tabs);
+
         self.window.end();
         self.window.show();
-        println!("Launching LayText ...");
+        println!("Launching LayText(\x1b[37m{}\x1b[0m) ...",lay_version::VERSION);
         self.launch(&mut tabs);
-        println!("GoodBye ...");
+        println!("LayText~> GoodBye ...");
     }
     //#########################################################################################
     pub fn insert_tab(&mut self)-> Group {
@@ -75,11 +71,10 @@ impl LayText{
         self.tabcount+=1;
         let tab = self.tabcount.clone(); 
         let mut group = Group::new(10,60,890,600," untitled    \u{2a2f}");
+        // self.window.resizable(&group);
+        group.set_color(Color::from_rgb(255,255,255));
         group.set_label_size(11);
-        {
-            self.editors.push(lay_editor::LayEditor::new(fltk::text::TextBuffer::default()));
-            self.window.redraw();
-        }
+        self.editors.push(lay_editor::LayEditor::new(fltk::text::TextBuffer::default()));
         group.end();
 
         // atomic variable for setting the current tab
@@ -118,7 +113,7 @@ impl LayText{
                             eprintln!("LayText~> \x1b[36m Exceeded limit \x1b[0m");
                         }
                         // redraw the window to see the changes
-                        self.window.redraw();
+                        self.window.redraw();self.window.show();
                     }
                     // Handle the save file event ############################################
                     lay_menubar::Message::Save => {
@@ -319,6 +314,10 @@ impl LayText{
             }
         }
     }
+    //#########################################################################################
+
+
+
 }
 //#################################################################################################
  

@@ -74,36 +74,6 @@ impl LayMenuBar{
             *s,
             Message::Open
         );
-        menu_bar.add_emit("&Find/\t",
-            Shortcut::Ctrl | 'l',
-            fltk::menu::MenuFlag::Normal,
-            *s,
-            Message::Open
-        );
-        menu_bar.add_emit("&Tools/ \t",
-            Shortcut::Ctrl | 'x',
-            fltk::menu::MenuFlag::Normal,
-            *s,
-            Message::Open
-        );
-        menu_bar.add_emit("&Find/ \t",
-            Shortcut::Ctrl | 'x',
-            fltk::menu::MenuFlag::Normal,
-            *s,
-            Message::Open
-        );
-        menu_bar.add_emit("&Project/Save Project \t",
-            Shortcut::Ctrl | 'P',
-            fltk::menu::MenuFlag::Normal,
-            *s,
-            Message::Open
-        );
-        menu_bar.add_emit("&Project/Add Folder To Project \t",
-            Shortcut::Ctrl | 'P',
-            fltk::menu::MenuFlag::Normal,
-            *s,
-            Message::Open
-        );
         menu_bar.add_emit("&Help/About \t",
             Shortcut::Ctrl | 'x',
             fltk::menu::MenuFlag::Normal,

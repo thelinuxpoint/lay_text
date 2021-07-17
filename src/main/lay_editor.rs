@@ -1,10 +1,8 @@
-use fltk::enums::Color;
-use fltk::enums::Font;
+use std;
 use fltk::text::*;
 use fltk::prelude::*;
-use std;
-use fltk::enums::FrameType;
 use std::path::PathBuf;
+use fltk::enums::{Color,Font,FrameType};
 
 #[derive(Debug)]
 pub struct LayEditor {
@@ -19,7 +17,7 @@ impl LayEditor {
     //#######################################################
     pub fn new(buf:fltk::text::TextBuffer)->Self {
 
-        let mut term = TextEditor::new(10,63,880,530,"");
+        let mut term = TextEditor::new(10,63,890,540,"");
         term.set_color(Color::from_rgb(40,41,35));
         term.set_buffer(Some(buf));
         term.set_cursor_style(Cursor::Simple);
