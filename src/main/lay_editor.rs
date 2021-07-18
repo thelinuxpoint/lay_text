@@ -15,9 +15,9 @@ pub struct LayEditor {
 }
 impl LayEditor {
     //#######################################################
-    pub fn new(buf:fltk::text::TextBuffer)->Self {
+    pub fn new(buf:fltk::text::TextBuffer,x:i32,y:i32,z:i32)->Self {
 
-        let mut term = TextEditor::new(10,63,890,540,"");
+        let mut term = TextEditor::new(z,63,x-10,y-87,"");
         term.set_color(Color::from_rgb(40,41,35));
         term.set_buffer(Some(buf));
         term.set_cursor_style(Cursor::Simple);

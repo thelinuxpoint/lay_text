@@ -2,6 +2,7 @@ use std::sync::atomic::{AtomicUsize,Ordering};
 use std::sync::Arc;
 // fltk's
 use fltk::prelude::*;
+use fltk::tree::*;
 use fltk::app;
 use fltk::dialog;
 use fltk::window::*;
@@ -9,8 +10,8 @@ use fltk::menu::*;
 use fltk::app::Scheme;
 use fltk::button::Button;
 use fltk::text::TextBuffer;
-use fltk::group::{Tabs,Group,Tile,Scroll};
-use fltk::enums::{Color,Shortcut,FrameType,Event};
+use fltk::group::{Tabs,Group,Tile,Scroll,VGrid,Pack,PackType};
+use fltk::enums::{Color,Shortcut,FrameType,Event,Align};
 use fltk::dialog::{FileChooser,FileChooserType,NativeFileChooser,NativeFileChooserType,FileDialogType};
 //########################################################
 pub mod lay_editor;
@@ -18,11 +19,11 @@ pub mod lay_menubar;
 pub mod lay_version;
 //###########################################################################################
 pub struct LayText{
-    tabcount:  i32,
-    receive:   fltk::app::Receiver<lay_menubar::Message>,
-    send:      fltk::app::Sender<lay_menubar::Message>,
-    applet:    fltk::app::App,
-    window:    OverlayWindow,
+    tabcount:      i32,
+    receive:       fltk::app::Receiver<lay_menubar::Message>,
+    send:          fltk::app::Sender<lay_menubar::Message>,
+    applet:        fltk::app::App,
+    window:        OverlayWindow,
     current_tab:   Arc<AtomicUsize>,
     editors:       Vec<lay_editor::LayEditor>
 }
@@ -35,12 +36,13 @@ impl LayText{
         app::foreground(200,200,200);
         let mut window = OverlayWindow::new(0, 0, 900, 600, "Lay Text").center_screen();
         window.set_color(Color::from_rgb(24,25,21));
-        // window.make_resizable(true);
+        window.make_resizable(true);
+
         Self {
             tabcount:      0,
             receive:       r,
             send:          s,
-            applet:        fltk::app::App::default().with_scheme(app::Scheme::Plastic),
+            applet:        fltk::app::App::default().with_scheme(app::Scheme::Gtk),
             window:        window,
             current_tab:   Arc::new(AtomicUsize::new(1)),
             editors:       vec![]
@@ -51,32 +53,44 @@ impl LayText{
 
         // Menu Bar Setting ################################
         let _menu = lay_menubar::LayMenuBar::new(&self.send);
-
-        let mut tabs = Tabs::new(10,35,890,550,"");
+        let _menu2 = lay_menubar::LayBarBottom::new(&self.send);
+        
+        let mut tile = Tile::new(0,35,890,542,"");
+        
+            let mut tree = Tree::new(0,35,10,542,"");
+            tree.set_color(Color::from_rgb(24,25,21));
+        
+        let mut tabs = Tabs::new(10,35,890,542,"");
         tabs.set_label_color(Color::from_rgb(255,255,255));
         tabs.set_selection_color(Color::from_rgb(40,41,35));
         tabs.set_frame(FrameType::FlatBox);
+        //tile.resizable(&tabs);
+        // tile.resizable(&tree);
+        tile.end();      
 
-        self.window.resizable(&tabs);
-
+        self.window.resizable(&tile);
         self.window.end();
         self.window.show();
-        println!("Launching LayText(\x1b[37m{}\x1b[0m) ...",lay_version::VERSION);
-        self.launch(&mut tabs);
+        // now finally launch it
+        println!("Launching LayText(\x1b[37m{}\x1b[0m) ... \u{2191}",lay_version::VERSION);
+        self.launch(&mut tabs,&mut tree);
         println!("LayText~> GoodBye ...");
     }
     //#########################################################################################
-    pub fn insert_tab(&mut self)-> Group {
+    pub fn insert_tab(&mut self,tabs:i32)-> Group {
 
         self.tabcount+=1;
         let tab = self.tabcount.clone(); 
-        let mut group = Group::new(10,60,890,600," untitled    \u{2a2f}");
-        // self.window.resizable(&group);
+
+        let mut group = Group::new(tabs,60,self.window.width()-10,self.window.height()-87," untitled    \u{2a2f}");
+        // let mut but = Button::new( 88, 37 , 10, 10, "@1+");
         group.set_color(Color::from_rgb(255,255,255));
         group.set_label_size(11);
-        self.editors.push(lay_editor::LayEditor::new(fltk::text::TextBuffer::default()));
+        group.begin();
+            self.editors.push(lay_editor::LayEditor::new(fltk::text::TextBuffer::default(),self.window.width(),self.window.height(),tabs));
+            group.resizable(&self.editors[(tab-1) as usize].editor);   
         group.end();
-
+        
         // atomic variable for setting the current tab
         let cur = Arc::clone(&self.current_tab);
         group.handle(move |_,x| match x{
@@ -95,22 +109,21 @@ impl LayText{
         group
     }
     //#########################################################################################
-    pub fn launch(&mut self,tabs:&mut Tabs){
+    pub fn launch(&mut self,tabs:&mut Tabs,tile:&mut Tree){
 
         while  self.applet.wait() {
             if let Some(msg) = self.receive.recv(){
                 match msg {
-                    // Handle the new file event ############################################
+                    // Handle the new file event ##############################################
                     lay_menubar::Message::New => {
-
                         tabs.begin();
-                        tabs.add_resizable(&self.insert_tab());
+                        tabs.add_resizable(&self.insert_tab(tabs.x()));
                         tabs.end();
-                        println!("{:?} {:?}",tabs.x(),tabs.y());
-                        println!("LayText~> New Tab (Count : {})",self.tabcount);
-
+                        
+                        println!("LayText~> New Tab (Count : \x1b[36m{}\x1b[0m)",self.tabcount);
+                        
                         if self.tabcount>20 {
-                            eprintln!("LayText~> \x1b[36m Exceeded limit \x1b[0m");
+                            eprintln!(" ~> \x1b[36m Exceeded limit \u{26d4}\x1b[0m");
                         }
                         // redraw the window to see the changes
                         self.window.redraw();self.window.show();
@@ -127,7 +140,7 @@ impl LayText{
                             chooser.show();
 
                             match chooser.filename().file_name(){
-                                Some(xyz) =>{
+                                Some(_xyz) =>{
                                     println!("{:?}",chooser.filename());
                                     tabs.child((self.current_tab.load(Ordering::SeqCst) as i32)-1).unwrap().set_label((String::from(chooser.filename().file_name().unwrap().to_str().unwrap())+"    *").as_str());
                                     self.editors[self.current_tab.load(Ordering::SeqCst)-1].path = chooser.filename();
@@ -163,9 +176,9 @@ impl LayText{
                         chooser.show();
 
                         match chooser.filename().file_name(){
-                            Some(xyz) =>{
+                            Some(_xyz) =>{
                                 tabs.begin();
-                                tabs.add_resizable(&self.insert_tab());
+                                tabs.add_resizable(&self.insert_tab(tabs.x()));
                                 tabs.end();
                                 tabs.child(tabs.children()-1).unwrap().set_label((String::from(chooser.filename().file_name().unwrap().to_str().unwrap())+"    \u{2a2f}").as_str());
                                 let x = tabs.children() as usize;
@@ -191,6 +204,7 @@ impl LayText{
                 match app::event(){
 
                     Event::Focus => {
+                        tabs.redraw();
                         for i in 0..self.tabcount {
                             if (i+1)==self.current_tab.load(Ordering::SeqCst) as i32{
                                 let mut x = tabs.child(i).unwrap().label();
@@ -237,7 +251,7 @@ impl LayText{
                     }
                     // Check for editted files and focus shifting ...
                     Event::Push => {
-
+                        tabs.redraw();
                         for i in 0..self.tabcount {
                             if (i+1)==self.current_tab.load(Ordering::SeqCst) as i32{
                                 let mut x = tabs.child(i).unwrap().label();
@@ -257,8 +271,7 @@ impl LayText{
                                         tabs.child(i).unwrap().set_label(x.as_str());
                                         tabs.redraw();
                                     }
-                                }
-                                
+                                }   
                             }
                             else {
                                 let mut x = tabs.child(i).unwrap().label();
@@ -283,7 +296,7 @@ impl LayText{
                         }
                     }
                     Event::KeyUp => {
-
+                        tabs.redraw();
                         for i in 0..self.tabcount {
                             if (i+1)==self.current_tab.load(Ordering::SeqCst) as i32{
                                 let mut x = tabs.child(i).unwrap().label();

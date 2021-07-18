@@ -84,3 +84,24 @@ impl LayMenuBar{
         Self{menu:menu_bar}
     }
 }
+
+pub struct LayBarBottom{
+    pub menu: fltk::menu::MenuBar
+}
+impl LayBarBottom{
+    pub fn new(s: &app::Sender<Message>)-> Self{
+        let mut menu_bar = MenuBar::new(0,578,900,23,"");
+        menu_bar.set_frame(FrameType::FlatBox);
+        menu_bar.set_text_color(Color::from_rgb(255,255,255));
+        menu_bar.set_selection_color(Color::from_rgb(10,10,100));
+        menu_bar.set_text_size(12);
+        menu_bar.set_color(Color::from_rgb(18,19,16));
+        menu_bar.add_emit("&Edit/Copy Line \t",
+            Shortcut::Ctrl | 'l',
+            fltk::menu::MenuFlag::Normal,
+            *s,
+            Message::Open
+        ); 
+        Self{menu:menu_bar}
+    }
+}
