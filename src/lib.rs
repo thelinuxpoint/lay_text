@@ -1,3 +1,3 @@
-#[path = "main/window.rs"]
-pub mod window;
+#[path = "main/lay_window.rs"]
+pub mod lay_window;
 
