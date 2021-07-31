@@ -9,7 +9,8 @@ use fltk::enums::FrameType;
 #[derive(Clone,Copy,Debug)]
 pub enum Message{
     New,
-    NewTerm,
+    OpenTerm,
+    OpenFolder,
     Open,
     Close,
     Save,
@@ -36,11 +37,11 @@ impl LayMenuBar{
             *s,
             Message::New
         );
-        menu_bar.add_emit("&File/New Terminal\t",
+        menu_bar.add_emit("&File/Open Terminal\t",
             Shortcut::Ctrl | 't',
             fltk::menu::MenuFlag::Normal,
             *s,
-            Message::NewTerm
+            Message::OpenTerm
         );
         menu_bar.add_emit("&File/Open File \t",
             Shortcut::Ctrl | 'o',
@@ -64,7 +65,7 @@ impl LayMenuBar{
             Shortcut::None,
             fltk::menu::MenuFlag::Normal,
             *s,
-            Message::Quit
+            Message::OpenFolder
         );
 
         menu_bar.add_emit("&File/Close File \t",

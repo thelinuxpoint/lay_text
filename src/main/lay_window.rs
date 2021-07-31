@@ -1,9 +1,12 @@
 use std::sync::atomic::{AtomicI32,Ordering};
 use std::sync::Arc;
 use std::collections::VecDeque;
-
+use std::fs;
 use std::collections::HashMap;
-// fltk's
+use std::path::PathBuf;
+use std::path::Path;
+// fltk's 
+use fltk::tree::TreeConnectorStyle;
 use fltk::prelude::*;
 use fltk::tree::*;
 use fltk::app;
@@ -12,9 +15,9 @@ use fltk::window::*;
 use fltk::menu::*;
 use fltk::app::Scheme;
 use fltk::app::MouseButton;
-
 use fltk::button::Button;
 use fltk::text::TextBuffer;
+use fltk::image::PngImage;
 use fltk::group::{Tabs,Group,Tile,Scroll,VGrid,Pack,PackType};
 use fltk::enums::{Color,Shortcut,FrameType,Event,Align};
 use fltk::dialog::{FileChooser,FileChooserType,NativeFileChooser,NativeFileChooserType,FileDialogType};
@@ -22,23 +25,25 @@ use fltk::dialog::{FileChooser,FileChooserType,NativeFileChooser,NativeFileChoos
 pub mod lay_editor;
 pub mod lay_menubar;
 pub mod lay_version;
+pub mod lay_term;
 //###########################################################################################
 pub struct LayText{
     tabcount:      i32,
-    receive:       fltk::app::Receiver<lay_menubar::Message>, /**/ 
-    send:          fltk::app::Sender<lay_menubar::Message>,   /**/
-    applet:        fltk::app::App,                          
-    window:        OverlayWindow,
-    current_tab:   Arc<AtomicI32>,
-    editors:       HashMap<i32,lay_editor::LayEditor>,
-    map:           VecDeque<i32>
+    receive:       fltk::app::Receiver<lay_menubar::Message>, /*message receiver*/ 
+    send:          fltk::app::Sender<lay_menubar::Message>,   /*message sender*/
+    applet:        fltk::app::App,  /*The app*/                       
+    window:        OverlayWindow,   /*The Main Window*/
+    current_tab:   Arc<AtomicI32>,  /*ARC for setting Current TAB*/
+    editors:       HashMap<i32,lay_editor::LayEditor>,  /*editors with automic tab count and mapping*/
+    map:           VecDeque<i32>,/*the useful member for mapping tabs with index*/
+    // folders:       VecDeque<VecDeque<String>>/**/
 }
 
 impl LayText{
     //#########################################################################################
     pub fn new()-> Self{
         let (s,r) = fltk::app::channel::<lay_menubar::Message>();
-        app::background(24,25,21);
+        app::background(22,23,19);
         app::foreground(200,200,200);
         let mut window = OverlayWindow::new(0, 0, 900, 600, "Lay Text").center_screen();
         window.set_color(Color::from_rgb(24,25,21));
@@ -48,11 +53,12 @@ impl LayText{
             tabcount:      0,
             receive:       r,
             send:          s,
-            applet:        fltk::app::App::default().with_scheme(app::Scheme::Gtk),
+            applet:        fltk::app::App::default().with_scheme(app::Scheme::Plastic),
             window:        window,
             current_tab:   Arc::new(AtomicI32::new(1)),
             editors:       HashMap::new(),
-            map:           VecDeque::new()
+            map:           VecDeque::new(),
+            // folders:       VecDeque::new()
         }
     }
     //#########################################################################################
@@ -61,15 +67,17 @@ impl LayText{
         // Menu Bar Setting ################################
         let _menu = lay_menubar::LayMenuBar::new(&self.send);
         let _menu2 = lay_menubar::LayBarBottom::new(&self.send);
-        
+
         let mut tile = Tile::new(0,35,890,542,"");
-        
         let mut tree = Tree::new(0,35,10,542,None);
         tree.set_color(Color::from_rgb(24,25,21));
         tree.set_frame(FrameType::FlatBox);
-        
+        tree.set_scrollbar_size(10);
+        tree.set_root_label("FOLDERS");
+        tree.set_connector_style(TreeConnectorStyle::None);
+        tree.set_select_frame(FrameType::NoBox);
+        // self.terminals.insert(0,lay_term::LayTerm::new(fltk::text::TextBuffer::default(),0,577,900,2));        
         let mut tabs = Tabs::new(10,35,890,542,"");
-        
         tabs.set_label_color(Color::from_rgb(255,255,255));
         tabs.set_selection_color(Color::from_rgb(40,41,35));
         tabs.set_frame(FrameType::FlatBox);
@@ -99,6 +107,7 @@ impl LayText{
         println!("LayText~> GoodBye ...");
     }
     //#########################################################################################
+    //#########################################################################################
     pub fn insert_tab(&mut self,tabs:i32)-> Group {
 
         self.tabcount+=1;
@@ -107,8 +116,7 @@ impl LayText{
         group.set_color(Color::from_rgb(255,255,255));
         group.set_label_size(12);
         group.begin();
-        self.editors.insert(tab,lay_editor::LayEditor::new(fltk::text::TextBuffer::default(),self.window.width(),self.window.height(),tabs));
-        
+        self.editors.insert(tab,lay_editor::LayEditor::new(fltk::text::TextBuffer::default(),self.window.width(),self.window.height(),tabs));        
         group.resizable(&self.editors[&tab].editor); 
         group.end();
         self.map.push_back(tab);
@@ -141,10 +149,26 @@ impl LayText{
                         tabs.begin();
                         tabs.add_resizable(&self.insert_tab(tabs.x()));
                         tabs.end();
-                        
                         println!("LayText~> New Tab (Count : \x1b[36m{}\x1b[0m)",self.tabcount);
                         // redraw the window to see the changes
                         self.window.redraw();
+                    }
+                    // Handle new Terminal Event #############################################
+                    lay_menubar::Message::OpenTerm =>{
+                        
+                        // println!("LayText~> New Terminal (Count : \x1b[36m{}\x1b[0m)",self.tabcount);
+                        // redraw the window to see the changes
+                        self.window.redraw();
+                    }
+                    // ###########################################
+                    lay_menubar::Message::OpenFolder =>{
+
+                        let mut chooser = NativeFileChooser::new(
+                                FileDialogType::BrowseDir
+                            );
+                        chooser.show();
+                        self.put_dirs(chooser.filename(),tree);
+                        
                     }
                     // Handle the save file event ############################################
                     lay_menubar::Message::Save => {
@@ -152,7 +176,7 @@ impl LayText{
                         print!("LayText~> Saving ... ");
                         if !self.editors[&self.current_tab.load(Ordering::SeqCst)].is_defined {
                             let mut chooser = NativeFileChooser::new(
-                                FileDialogType::BrowseSaveFile 
+                                FileDialogType::BrowseSaveFile
                             );
                             chooser.show();
                             match chooser.filename().file_name(){
@@ -166,14 +190,14 @@ impl LayText{
                                         x.length=x.buffer().unwrap().length();
                                         x.is_saved = true;
                                         tabs.redraw();
-                                    }                                    
+                                    }
                                 }
                                 None => {
                                     dialog::alert(100,100,"Please give a filename");
                                 }
                             }
                         }
-                        else {  
+                        else {
                             if let Some(x) = self.editors.get_mut(&self.current_tab.load(Ordering::SeqCst)) {                     
                                 x.buffer().unwrap().save_file(x.path.clone());
                                 x.length=x.buffer().unwrap().length();
@@ -187,7 +211,7 @@ impl LayText{
 
                         print!("LayText~> Opening ... ");
                         let mut chooser = NativeFileChooser::new(
-                                FileDialogType::BrowseFile 
+                                FileDialogType::BrowseFile
                             );
                         chooser.show();
                         match chooser.filename().file_name(){
@@ -214,16 +238,17 @@ impl LayText{
                             }
                         }
                     }
-                    // side bar toggle ##########################################################
+                    // Handle side bar toggle ###################################################
                     lay_menubar::Message::SideBar => {
                         // no idea ... do it later
 
                     }
+                    //  Handle Close Event ######################################################
                     lay_menubar::Message::Close => {
 
                         if tabs.children() > 0 && self.map.contains(&self.current_tab.load(Ordering::SeqCst)){
-                            let mut v = self.current_tab.load(Ordering::SeqCst);
-                            let mut indx = self.index_of(v);
+                            let v = self.current_tab.load(Ordering::SeqCst);
+                            let indx = self.index_of(v);
                             println!("LayText~> Closing Tab {}", (self.current_tab.load(Ordering::SeqCst) as i32));
                             self.editors.remove(&v);
                             self.map.remove(indx as usize);
@@ -322,6 +347,42 @@ impl LayText{
         }
     }
     //#########################################################################################
+    fn put_dirs(&mut self,file:PathBuf,tree:&mut Tree){
+
+        let mut image_open = PngImage::load("./src/open.png").unwrap();
+        image_open.scale(20,20,true,true);
+        tree.set_open_icon(Some(image_open));
+        let mut image_close = PngImage::load("./src/close.png").unwrap();
+        image_close.scale(20,20,true,true);
+        tree.set_close_icon(Some(image_close));
+        self.visit_dirs(file,tree);
+
+    }
+    
+    fn visit_dirs(&mut self, dir:PathBuf,tree:&mut Tree){
+        if dir.is_dir(){
+            for entry in fs::read_dir(dir.as_path()).unwrap() {
+                let entry = entry.unwrap();
+                let path:PathBuf = entry.path();
+                if path.is_dir() {
+                    self.visit_dirs(path,tree);
+                }
+                else {
+                    tree.add(path.to_str().unwrap());
+                }
+            }
+        }
+        else{
+            tree.add(dir.to_str().unwrap());
+        }
+    }
+    //#########################################################################################
+    fn file_type(arg:PathBuf){
+
+
+    }
+
+    //#########################################################################################
     fn index_of(&mut self,get:i32) -> i32{
         let mut x = 0;
         for i in self.map.iter() {
@@ -334,4 +395,3 @@ impl LayText{
     }
 }
 //#################################################################################################
- 
