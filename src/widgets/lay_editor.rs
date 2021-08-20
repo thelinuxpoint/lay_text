@@ -2,22 +2,25 @@ use std;
 use fltk::text::*;
 use fltk::prelude::*;
 use std::path::PathBuf;
-use fltk::enums::{Color,Font,FrameType};
+use fltk::enums::{Color,Font,FrameType,Align};
 
 #[derive(Debug)]
 pub struct LayEditor {
-    pub editor:     fltk::text::TextEditor,
-    pub is_defined: bool,
     pub path:       PathBuf,
+    pub line:       i32,
+    pub column:     i32,
     pub length:     i32,
+    pub f_type:     String,
+    pub editor:     fltk::text::TextEditor,
     pub is_saved:   bool,
+    pub is_defined: bool,
 
 }
 impl LayEditor {
     //#######################################################
     pub fn new(buf:fltk::text::TextBuffer,x:i32,y:i32,z:i32)->Self {
 
-        let mut term = TextEditor::new(z,63,x-z,y-87,"");
+        let mut term = TextEditor::new(z,63,x-z,y-86,"");
         term.set_color(Color::from_rgb(40,41,35));
         term.set_buffer(Some(buf));
         term.set_cursor_style(Cursor::Simple);
@@ -31,23 +34,28 @@ impl LayEditor {
         term.set_linenumber_bgcolor(Color::from_rgb(40,41,35));
         term.set_linenumber_fgcolor(Color::from_rgb(216,205,175));
         term.set_selection_color(Color::from_rgb(60,60,55));
- 
+        term.set_scrollbar_align(Align::ImageBackdrop);
+
         Self{
-            editor:      term,
-            is_defined:  false,
             path:        PathBuf::new(),
+            line:        0,
+            editor:      term,
             length:      0,
-            is_saved:    false
+            f_type:      String::from("Plain Text"),
+            column:      0,
+            is_saved:    false,
+            is_defined:  false,
         }
     }
-    //#######################################################
 }
+
 impl std::ops::Deref for LayEditor{
     type Target = fltk::text::TextEditor;
     fn deref(&self)-> &Self::Target{
         &self.editor
     }
 }
+
 impl std::ops::DerefMut for LayEditor{
 
     fn deref_mut(&mut self)-> &mut Self::Target{

@@ -5,7 +5,9 @@ use std::fs;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::path::Path;
+
 // fltk's 
+use fltk::frame::Frame;
 use fltk::tree::TreeConnectorStyle;
 use fltk::prelude::*;
 use fltk::tree::*;
@@ -17,10 +19,12 @@ use fltk::app::Scheme;
 use fltk::app::MouseButton;
 use fltk::button::Button;
 use fltk::text::TextBuffer;
-use fltk::image::PngImage;
+use fltk::image::{SvgImage,PngImage};
 use fltk::group::{Tabs,Group,Tile,Scroll,VGrid,Pack,PackType};
 use fltk::enums::{Color,Shortcut,FrameType,Event,Align};
+use fltk::dialog::BeepType;
 use fltk::dialog::{FileChooser,FileChooserType,NativeFileChooser,NativeFileChooserType,FileDialogType};
+use fltk::enums::Font;
 //########################################################
 pub mod lay_editor;
 pub mod lay_menubar;
@@ -38,50 +42,112 @@ pub struct LayText{
     map:           VecDeque<i32>,/*the useful member for mapping tabs with index*/
     // folders:       VecDeque<VecDeque<String>>/**/
 }
+fn file_type_changer(arg:&PathBuf,menu:&mut lay_menubar::LayBarEnd){
+    if let Some(c) = arg.extension(){
+        if c=="java"{
+            println!("found java file");
+            menu.menu.set_label("Java");
+
+        }
+        else if c=="rs"{
+            menu.menu.set_label("Rust");
+        }
+        else if c=="c++" || c=="cxx" || c=="cpp"{
+            menu.menu.set_label("C++");
+        }
+        else if c=="php" {
+            menu.menu.set_label("PHP");
+        }
+        else if c=="rb" {
+            menu.menu.set_label("Ruby");
+        }
+        else if c=="py" {
+            menu.menu.set_label("Python");
+        }
+        else if c=="sh" {
+            menu.menu.set_label("Bashscript");
+        }
+        else if c=="js" {
+            menu.menu.set_label("Javascript");
+        }
+        else if c=="jsp" {
+            menu.menu.set_label("JSP");
+            menu.menu.set_tooltip("Java Server Pages");
+
+        }
+        else if c=="svg" || c=="xml" || c=="xslt"{
+            menu.menu.set_label("XML");
+            menu.menu.set_tooltip("Extensible Markup Language");
+        }
+    }
+    else{
+            menu.menu.set_label("Plain Text");
+        }
+}
 
 impl LayText{
     //#########################################################################################
     pub fn new()-> Self{
         let (s,r) = fltk::app::channel::<lay_menubar::Message>();
-        app::background(22,23,19);
+        app::background(24,25,21);
         app::foreground(200,200,200);
         let mut window = OverlayWindow::new(0, 0, 900, 600, "Lay Text").center_screen();
         window.set_color(Color::from_rgb(24,25,21));
         window.make_resizable(true);
+        let mut image_open = PngImage::load("./src/Icon/48x48.png").unwrap();
+        image_open.scale(20,20,true,true);
+        window.set_icon(Some(image_open));
+    
 
         Self {
             tabcount:      0,
             receive:       r,
             send:          s,
-            applet:        fltk::app::App::default().with_scheme(app::Scheme::Plastic),
+            applet:        fltk::app::App::default().with_scheme(app::Scheme::Base),
             window:        window,
             current_tab:   Arc::new(AtomicI32::new(1)),
             editors:       HashMap::new(),
             map:           VecDeque::new(),
-            // folders:       VecDeque::new()
         }
     }
     //#########################################################################################
     pub fn layapp(&mut self){
 
         // Menu Bar Setting ################################
+        
         let _menu = lay_menubar::LayMenuBar::new(&self.send);
-        let _menu2 = lay_menubar::LayBarBottom::new(&self.send);
+
+
+        // the bottom menu item is laid over this menubar
+        let mut menu_bar_bottom = SysMenuBar::new(0,578,900,23,"");
+        menu_bar_bottom.set_frame(FrameType::FlatBox);
+        menu_bar_bottom.set_text_color(Color::from_rgb(255,255,255));
+        menu_bar_bottom.set_selection_color(Color::from_rgb(0,0,0));
+        menu_bar_bottom.set_text_size(13);
+        menu_bar_bottom.set_color(Color::from_rgb(19,20,17));
+        //####################################################
+        let _start = lay_menubar::LayBarStart::new(&self.send);
+        let mut _mid = lay_menubar::LayBarMid::new(&self.send);
+        let mut _end = lay_menubar::LayBarEnd::new(&self.send);
 
         let mut tile = Tile::new(0,35,890,542,"");
         let mut tree = Tree::new(0,35,10,542,None);
+        
+
         tree.set_color(Color::from_rgb(24,25,21));
         tree.set_frame(FrameType::FlatBox);
-        tree.set_scrollbar_size(10);
-        tree.set_root_label("FOLDERS");
+        tree.set_scrollbar_size(5);
+        tree.set_root_label("");
         tree.set_connector_style(TreeConnectorStyle::None);
         tree.set_select_frame(FrameType::NoBox);
+        tree.clear_visible_focus();
+
         // self.terminals.insert(0,lay_term::LayTerm::new(fltk::text::TextBuffer::default(),0,577,900,2));        
         let mut tabs = Tabs::new(10,35,890,542,"");
         tabs.set_label_color(Color::from_rgb(255,255,255));
         tabs.set_selection_color(Color::from_rgb(40,41,35));
         tabs.set_frame(FrameType::FlatBox);
-
+        tabs.clear_visible_focus();
         let cur = Arc::clone(&self.current_tab);
         
         tile.handle(move |_,ev| match ev{
@@ -96,17 +162,17 @@ impl LayText{
 
 
         tile.end();
-   
+        
+        
         self.window.resizable(&tile);
         self.window.size_range(400,500,app::screen_size().0 as i32,app::screen_size().1 as i32);
         self.window.end();
         self.window.show();
         // now finally launch it
         println!("Launching LayText(\x1b[37m{}\x1b[0m) ... \u{2191}",lay_version::VERSION);
-        self.launch(&mut tabs,&mut tree);
+        self.launch(&mut tabs,&mut tree,&mut _end,&mut _mid);
         println!("LayText~> GoodBye ...");
     }
-    //#########################################################################################
     //#########################################################################################
     pub fn insert_tab(&mut self,tabs:i32)-> Group {
 
@@ -136,11 +202,18 @@ impl LayText{
                 false
             }
         });
+        //################################################
+
         group
     }
     //#########################################################################################
-    pub fn launch(&mut self,tabs:&mut Tabs,tree:&mut Tree){
+    pub fn launch(&mut self,tabs:&mut Tabs,tree:&mut Tree,menu:&mut lay_menubar::LayBarEnd,menu0:&mut lay_menubar::LayBarMid){
+        
+        tabs.begin();
+        tabs.add_resizable(&self.insert_tab(tabs.x()));
+        tabs.end();
 
+        
         while self.applet.wait() {
             if let Some(msg) = self.receive.recv(){
                 match msg {
@@ -165,8 +238,10 @@ impl LayText{
 
                         let mut chooser = NativeFileChooser::new(
                                 FileDialogType::BrowseDir
-                            );
+                        );
+                        
                         chooser.show();
+                        println!("{:?}",chooser.filename() );
                         self.put_dirs(chooser.filename(),tree);
                         
                     }
@@ -186,6 +261,7 @@ impl LayText{
                                     if let Some(x) = self.editors.get_mut(&self.current_tab.load(Ordering::SeqCst)) {
                                         x.path = chooser.filename();
                                         x.is_defined=true;
+
                                         x.buffer().unwrap().save_file(chooser.filename());
                                         x.length=x.buffer().unwrap().length();
                                         x.is_saved = true;
@@ -214,33 +290,40 @@ impl LayText{
                                 FileDialogType::BrowseFile
                             );
                         chooser.show();
-                        match chooser.filename().file_name(){
-                            Some(_xyz) => {
-                                tabs.begin();
-                                tabs.add_resizable(&self.insert_tab(tabs.x()));
-                                tabs.end();
-                                tabs.child(tabs.children()-1).unwrap().set_label((String::from(chooser.filename().file_name().unwrap().to_str().unwrap())+"    \u{2713}").as_str());
-                                let t = self.map[(tabs.children()-1) as usize];
-                                if let Some(x) = self.editors.get_mut(&t) {
-                                    x.path = chooser.filename();
-                                    x.is_defined=true;
-                                    let mut buf = x.buffer().unwrap();
-                                    buf.set_tab_distance(4);
-                                    buf.load_file(chooser.filename());
-                                    x.length=buf.length();
-                                    x.is_saved = true;
-                                    tabs.redraw();
-                                    println!("{:?} length : {}",chooser.filename(),buf.length());
+                        if chooser.filename().is_file(){
+                            match chooser.filename().file_name(){
+                                Some(_xyz) => {
+                                    tabs.begin();
+                                    tabs.add_resizable(&self.insert_tab(tabs.x()));
+                                    tabs.end();
+                                    tabs.child(tabs.children()-1).unwrap().set_label((String::from(chooser.filename().file_name().unwrap().to_str().unwrap())+"    \u{2713}").as_str());          
+                                    let t = self.map[(tabs.children()-1) as usize];
+                                    
+                                    if let Some(x) = self.editors.get_mut(&t) {
+
+                                        x.path = chooser.filename();
+                                        x.is_defined=true;
+                                        let mut buf = x.buffer().unwrap();
+                                        buf.set_tab_distance(4);
+                                        buf.load_file(chooser.filename());
+                                        x.length=buf.length();
+                                        x.is_saved = true;
+                                        tabs.redraw();
+                                        println!("{:?} length : {}",chooser.filename(),buf.length());
+                                    }
+                                }
+                                None => {
+                                    dialog::beep(BeepType::Error);
+                                    dialog::alert_default("Please Select a file");
                                 }
                             }
-                            None => {
-                                dialog::alert(100,100,"Please Select a file");
-                            }
-                        }
+                        }else{dialog::beep(BeepType::Error);dialog::alert_default("Please Select a file");}
                     }
                     // Handle side bar toggle ###################################################
                     lay_menubar::Message::SideBar => {
                         // no idea ... do it later
+                        
+                       
 
                     }
                     //  Handle Close Event ######################################################
@@ -265,12 +348,14 @@ impl LayText{
                 match app::event(){
 
                     Event::Focus => {
+
                         if self.map.len() > 0 && self.map.contains(&self.current_tab.load(Ordering::SeqCst)){
                             tabs.redraw();
                             let i = self.current_tab.load(Ordering::SeqCst);
                             let mut temp = tabs.child(self.index_of(i)).unwrap().label();
                             temp.pop();
                             if let Some(x) = self.editors.get_mut(&i) {
+                                file_type_changer(&x.path,menu);
                                 let len = x.length;
                                 let buf_len = x.buffer().unwrap().length();
                                 if len!=buf_len {
@@ -297,9 +382,12 @@ impl LayText{
                             let mut temp = tabs.child(self.index_of(i)).unwrap().label();
                             temp.pop();
                             if let Some(x) = self.editors.get_mut(&i) {
+                                
+                                file_type_changer(&x.path,menu);
                                 let len = x.length;
                                 let buf_len = x.buffer().unwrap().length();
                                 if len!=buf_len {
+
                                     temp+="\u{25aa}";
                                     x.is_saved = false;
                                     tabs.child(self.index_of(i)).unwrap().set_label(temp.as_str());
@@ -321,12 +409,17 @@ impl LayText{
                             let mut temp = tabs.child(self.index_of(i)).unwrap().label();
                             temp.pop();
                             if let Some(x) = self.editors.get_mut(&i) {
+
+                                file_type_changer(&x.path,menu);
                                 let len = x.length;
                                 let buf_len = x.buffer().unwrap().length();
                                 if len!=buf_len {
                                     temp+="\u{25aa}";
                                     x.is_saved = false;
-                                    tabs.child(self.index_of(i)).unwrap().set_label(temp.as_str());
+                                    x.line=x.editor.position_to_xy(0).0;
+                                    x.column=x.editor.position_to_xy(0).1;
+                                   
+                                    tabs.child(self.index_of(i)).unwrap().set_label(temp.as_str());                                    
                                     tabs.redraw();
                                 }
                                 else {
@@ -349,25 +442,29 @@ impl LayText{
     //#########################################################################################
     fn put_dirs(&mut self,file:PathBuf,tree:&mut Tree){
 
-        let mut image_open = PngImage::load("./src/open.png").unwrap();
-        image_open.scale(20,20,true,true);
+        let mut image_open = SvgImage::load("./src/close0.svg").unwrap();
+        image_open.scale(18,18,true,true);
         tree.set_open_icon(Some(image_open));
-        let mut image_close = PngImage::load("./src/close.png").unwrap();
-        image_close.scale(20,20,true,true);
+        let mut image_close = SvgImage::load("./src/open0.svg").unwrap();
+        image_close.scale(18,18,true,true);
         tree.set_close_icon(Some(image_close));
+        tree.set_root_label(file.to_str().unwrap());
         self.visit_dirs(file,tree);
 
     }
-    
+    //#########################################################################################
     fn visit_dirs(&mut self, dir:PathBuf,tree:&mut Tree){
         if dir.is_dir(){
             for entry in fs::read_dir(dir.as_path()).unwrap() {
                 let entry = entry.unwrap();
+
                 let path:PathBuf = entry.path();
+
                 if path.is_dir() {
                     self.visit_dirs(path,tree);
                 }
                 else {
+                    println!("{:?}",path.parent().unwrap().to_str());
                     tree.add(path.to_str().unwrap());
                 }
             }
@@ -377,20 +474,18 @@ impl LayText{
         }
     }
     //#########################################################################################
-    fn file_type(arg:PathBuf){
-
-
-    }
+    
 
     //#########################################################################################
     fn index_of(&mut self,get:i32) -> i32{
         let mut x = 0;
-        for i in self.map.iter() {
+        for i in self.map.iter(){
             if *i==get{
                 break;
             }
             x+=1;
         }
+
         x
     }
 }
