@@ -5,6 +5,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicI32,Ordering};
 //fltk includes ####################
 use fltk;
+use fltk::app;
 use fltk::dialog::{FileChooser,FileChooserType,NativeFileChooser,NativeFileChooserType,FileDialogType};
 use fltk::window::Window;
 use fltk::{prelude::*, *};
@@ -204,7 +205,39 @@ impl LayText{
         prev.set_frame(enums::FrameType::NoBox);
         prev.set_tooltip("Scroll Tabs");
         prev.clear_visible_focus();
-        
+        prev.handle({
+            let mut self_grp = self.tabs.hscroll.clone();
+            move |w, ev| match ev {
+                enums::Event::Push => {
+                    // println!("xpos: {} : Maximum: {} : Minimum: {}",self_grp.xposition(),self_grp.hscrollbar().maximum(),self_grp.hscrollbar().minimum());
+                    if (self_grp.xposition()!=(self_grp.hscrollbar().minimum()) as i32){
+                        self_grp.scroll_to(self_grp.xposition()-15,self_grp.yposition());
+                    }
+                    true
+                }, 
+                enums::Event::MouseWheel => {
+                    // println!("xpos: {} : Maximum: {} : Minimum: {}",self_grp.xposition(),self_grp.hscrollbar().maximum(),self_grp.hscrollbar().minimum());
+                    match app::event_dy(){
+
+                        app::MouseWheel::Up => {
+                            if (self_grp.xposition()!=(self_grp.hscrollbar().maximum())as i32){
+                                self_grp.scroll_to(self_grp.xposition()+15,self_grp.yposition());
+                            }
+                        }
+                        app::MouseWheel::Down => {
+                            if (self_grp.xposition()!=(self_grp.hscrollbar().minimum()) as i32){
+                                self_grp.scroll_to(self_grp.xposition()-15,self_grp.yposition());
+                            }
+                        }
+                        _=>{  }
+
+                    }
+
+                    true
+                },
+                _ => false,
+            }
+        });
         
         let mut next = Button::new(25,75,15,15,None);
         let mut image = SvgImage::load("./src/mono-navigator-next.svg").unwrap();
@@ -219,8 +252,10 @@ impl LayText{
             let mut self_grp = self.tabs.hscroll.clone();
             move |w, ev| match ev {
                 enums::Event::Push => {
-                    println!("xpos: {} : Maximum: {} : Minimum: {}",self_grp.xposition(),self_grp.hscrollbar().maximum(),self_grp.hscrollbar().minimum());
-                    self_grp.scroll_to(self_grp.xposition()+1,self_grp.yposition());
+                    // println!("xpos: {} : Maximum: {} : Minimum: {}",self_grp.xposition(),self_grp.hscrollbar().maximum(),self_grp.hscrollbar().minimum());
+                    if (self_grp.xposition()!=(self_grp.hscrollbar().maximum())as i32){
+                        self_grp.scroll_to(self_grp.xposition()+15,self_grp.yposition());
+                    }
                     true
                 },
                 _ => false,

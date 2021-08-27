@@ -3,11 +3,12 @@ use std::sync::atomic::{AtomicI32,Ordering};
 
 use fltk::prelude::*;
 use fltk::enums::{Color,Align, Event, FrameType};
-use fltk::group::{Group,Pack,PackType,Scroll,ScrollType};
+use fltk::group::{Group,Pack,PackType,Scroll,ScrollType,Row};
 use fltk::button::{Button};
 use fltk::image::{SvgImage};
 use fltk::app;
 use fltk::enums;
+use fltk::table::*;
 use fltk::valuator::Scrollbar;
 
 pub struct TabButton {
@@ -46,18 +47,19 @@ impl ClosableTab {
 
         let parent_grp = Group::new(x, y+10, w, h, None);
 
-        let mut scrgr = Scroll::new(x+48, y+10,w-48,31, None);
+        // let mut rowgr = Row::new(x+48, y+10,w-48,31, None);
+        let mut scrgr = Scroll::new(x+48, y+10,w-48,30, None);
         scrgr.set_color(Color::from_rgb(24,25,21));
         scrgr.set_scrollbar_size(1);
-        scrgr.set_type(ScrollType::Horizontal);
-
+        scrgr.set_type(ScrollType::None);
+        scrgr.hscrollbar().hide();
         let mut pk = Pack::new(x+48, y+10, w-48, 30, None);
         pk.set_spacing(3);
         pk.set_type(PackType::Horizontal);
         pk.end();
 
         scrgr.end();
-
+        // rowgr.end();
         // this the group containing text editor
         let mut grp = Group::new(x, y + 40, w, h, None);
         grp.set_color(Color::from_rgb(40,41,35));
