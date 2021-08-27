@@ -1,3 +1,2 @@
-#[path = "widgets/lay_window.rs"]
-pub mod lay_window;
-
+#[path = "widgets/lay_widget.rs"]
+pub mod lay_widget;

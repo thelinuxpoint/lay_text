@@ -3,7 +3,7 @@ use fltk::text::*;
 use fltk::prelude::*;
 use std::path::PathBuf;
 use fltk::enums::{Color,Font,FrameType,Align};
-
+use fltk::group::{Group};
 #[derive(Debug)]
 pub struct LayEditor {
     pub path:       PathBuf,
@@ -18,15 +18,15 @@ pub struct LayEditor {
 }
 impl LayEditor {
     //#######################################################
-    pub fn new(buf:fltk::text::TextBuffer,x:i32,y:i32,z:i32)->Self {
+    pub fn new(buf:fltk::text::TextBuffer,grp:&Group)->Self {
 
-        let mut term = TextEditor::new(z,63,x-z,y-86,"");
+        let mut term = TextEditor::new(0,grp.y(),grp.w(),grp.h(),"");
         term.set_color(Color::from_rgb(40,41,35));
         term.set_buffer(Some(buf));
         term.set_cursor_style(Cursor::Simple);
         term.set_text_color(Color::from_rgb(255,255,255));
         term.set_text_font(Font::Courier);
-        term.set_frame(FrameType::FlatBox);
+        term.set_frame(FrameType::NoBox);
         term.set_text_size(14);
         term.set_scrollbar_size(10);
         term.set_cursor_color(Color::White);
@@ -62,3 +62,4 @@ impl std::ops::DerefMut for LayEditor{
         &mut self.editor
     }
 }
+//########################################################################

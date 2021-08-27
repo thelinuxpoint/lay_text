@@ -9,10 +9,10 @@
     xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
     xmlns:dc="http://purl.org/dc/elements/1.1/"
     id="svg1"
-    sodipodi:docname="14_layer_raiselayer.svg"
+    sodipodi:docname="tab_right.svg"
     viewBox="0 0 60 60"
     sodipodi:version="0.32"
-    _SVGFile__filename="oldscale/actions/1downarrow.svg"
+    _SVGFile__filename="oldscale/actions/tab_left.svg"
     version="1.0"
     y="0"
     x="0"
@@ -25,34 +25,28 @@
       inkscape:pageshadow="2"
       inkscape:window-y="0"
       pagecolor="#ffffff"
-      inkscape:window-height="698"
-      inkscape:zoom="5.5173368"
+      inkscape:window-height="699"
+      inkscape:zoom="5.3353613"
       inkscape:window-x="0"
       borderopacity="1.0"
       inkscape:current-layer="svg1"
-      inkscape:cx="19.876317"
-      inkscape:cy="16.740953"
+      inkscape:cx="17.383689"
+      inkscape:cy="10.495969"
       inkscape:window-width="1024"
       inkscape:pageopacity="0.0"
   />
-  <g
-      id="g1712"
-      transform="matrix(1 0 0 -1 0 64.696)"
-    >
-    <path
-        id="path1090"
-        style="stroke-linejoin:round;color:#b5b5bd;stroke:#ffffff;stroke-linecap:round;stroke-width:10.716;fill:none"
-        transform="matrix(1.2286 -2.7502e-7 3.2294e-7 .70883 78.153 26.908)"
-        d="m-19.355 10.964h-39.68l19.84-34.364 19.84 34.364z"
-    />
-    <path
-        id="path1088"
-        style="stroke-linejoin:round;fill-rule:evenodd;color:#b5b5bd;stroke:#b5b5bd;stroke-linecap:round;stroke-width:5.358;fill:#b5b5bd"
-        transform="matrix(1.2286 -2.7502e-7 3.2294e-7 .70883 78.153 26.908)"
-        d="m-19.355 10.964h-39.68l19.84-34.364 19.84 34.364z"
-    />
-  </g
-  >
+  <path
+      id="path1708"
+      sodipodi:nodetypes="cccc"
+      style="stroke-linejoin:round;stroke:#ffffff;stroke-linecap:round;stroke-width:8.125;fill:none"
+      d="m17.834 55.31l24.332-25.31-24.332-25.31v50.62z"
+  />
+  <path
+      id="path826"
+      sodipodi:nodetypes="cccc"
+      style="stroke-linejoin:round;fill-rule:evenodd;stroke:#ffffff;stroke-linecap:round;stroke-width:3.125;fill:#ffffff"
+      d="m17.834 55.31l24.332-25.31-24.332-25.31v50.62z"
+  />
   <metadata
     >
     <rdf:RDF
@@ -100,4 +94,5 @@
     >
   </metadata
   >
-</svg>
+</svg
+>

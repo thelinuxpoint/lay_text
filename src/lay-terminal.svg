@@ -42,7 +42,7 @@
   /> -->
   <path
       id="rect838"
-      style="stroke-linejoin:round;fill-rule:evenodd;stroke:#b5b5bd;stroke-linecap:round;stroke-width:6;"
+      style="stroke-linejoin:round;fill-rule:evenodd;stroke:#b5b5bd;stroke-linecap:round;stroke-width:6;fill:none"
       d="m7.6845 12.483c-1.1413 0-2.0602 0.919-2.0602 2.06v30.914c0 1.141 0.9189 2.06 2.0602 2.06h44.63c1.143 0 2.062-0.919 2.062-2.06v-30.914c0-1.141-0.919-2.06-2.061-2.06h-44.63z"
   />
   <metadata
