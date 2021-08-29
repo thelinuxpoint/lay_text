@@ -14,6 +14,7 @@ pub enum Message{
     OpenFolder,
     Open,
     Close,
+    Closed(i32),
     Save,
     SaveAs,
     SideBar,
@@ -28,9 +29,9 @@ pub struct LayMenuBar{
 impl LayMenuBar{
     pub fn new(s: &app::Sender<Message>)-> Self{
         let mut menu_bar = SysMenuBar::new(0,30,900,30,"");
-        menu_bar.set_frame(FrameType::FlatBox); 
+        menu_bar.set_frame(FrameType::NoBox); 
         menu_bar.set_text_color(Color::from_rgb(255,255,255));
-        menu_bar.set_selection_color(Color::from_rgb(10,10,100));
+        menu_bar.set_selection_color(Color::from_rgb(255,0,0));
         menu_bar.set_text_size(15);
         menu_bar.set_color(Color::from_rgb(24,25,21));
 
@@ -128,7 +129,7 @@ pub struct LayBarStart{
 impl LayBarStart{
     pub fn new()-> Self{
         let mut sidebar = Button::new(0,632,35,20,"");
-        let mut image_open = SvgImage::load("./src/sidebar.svg").unwrap();
+        let mut image_open = SvgImage::load("./src/Icon/sidebar.svg").unwrap();
         image_open.scale(16,17,true,true);
         sidebar.set_image(Some(image_open));
         sidebar.set_frame(FrameType::NoBox);
@@ -136,7 +137,7 @@ impl LayBarStart{
         
         
         let mut terminal = Button::new(250,635,35,20,"");
-        let mut image = SvgImage::load("./src/lay-terminal.svg").unwrap();
+        let mut image = SvgImage::load("./src/Icon/lay-terminal.svg").unwrap();
         image.scale(16,17,true,true);
         terminal.set_image(Some(image));
         terminal.set_frame(FrameType::NoBox);

@@ -32,6 +32,8 @@ fn prep_shape() -> image::RgbImage {
     surface::ImageSurface::pop_current();
     img
 }
+
+
 fn file_type_changer(arg:&PathBuf,menu:&mut lay_menubar::LayBarEnd){
     if let Some(c) = arg.extension(){
 
@@ -82,13 +84,13 @@ pub struct LayText{
     tab_count:   i32,
     app:         fltk::app::App,
     editors:     HashMap<i32,lay_editor::LayEditor>,  /*editors with automic tab count and mapping*/
-    tabs:        lay_tabs::ClosableTab,
+    tabs:        lay_tabs::ClosableTab, /**/
     send:        fltk::app::Sender<lay_menubar::Message>,
     receive:     fltk::app::Receiver<lay_menubar::Message>,
 }
 
 impl LayText{
-
+    //############################################
     pub fn new() -> Self {
         let (s,r) = fltk::app::channel::<lay_menubar::Message>();
         let mut lay_window = Window::new(0,0,900,650,"");
@@ -98,7 +100,7 @@ impl LayText{
         lay_window.make_resizable(true);
 
         // lay_window.set_frame(FrameType::RoundedBox);
-        let mut img = PngImage::load("./src/Icon/48x48.png").unwrap();
+        let img = PngImage::load("./src/Icon/48x48.png").unwrap();
         // img.scale(20,20,true,true);
         lay_window.set_icon(Some(img));
 
@@ -139,35 +141,36 @@ impl LayText{
         frame.set_label_font(enums::Font::ScreenBold);
 
         let mut close = Button::new(875,10,15,15,None);
-        let mut image_open = SvgImage::load("./src/close_main.svg").unwrap();
+        let mut image_open = SvgImage::load("./src/Icon/close_main.svg").unwrap();
         image_open.scale(12,12,true,true);
         close.set_image(Some(image_open));
         close.set_frame(FrameType::NoBox);
-        close.set_frame(enums::FrameType::OFlatFrame);
-        close.set_color(Color::from_rgb(255,0,0));
+        // close.set_frame(enums::FrameType::OFlatFrame);
+        // close.set_color(Color::from_rgb(255,0,0));
         close.clear_visible_focus();
         close.set_callback(move |_| {println!("Closing");app::quit();});
         close.redraw(); 
         
         let mut max = Button::new(855,10,15,15,None);
-        let mut image = SvgImage::load("./src/maximize.svg").unwrap();
-        image.scale(11,11,true,true);
+        let mut image = SvgImage::load("./src/Icon/maximize.svg").unwrap();
+        image.scale(13,13,true,true);
         max.set_image(Some(image));
         max.set_frame(FrameType::NoBox);
-        max.set_color(Color::from_rgb(0,180,0));
-        max.set_frame(enums::FrameType::OFlatFrame);
+        // max.set_color(Color::from_rgb(0,180,0));
+        // max.set_frame(enums::FrameType::OFlatFrame);
         max.clear_visible_focus();
         max.set_callback(move |_| println!("Maximize")); 
 
         let mut min = Button::new(835,10,15,15,None);
-        let mut image = SvgImage::load("./src/minimize.svg").unwrap();
-        image.scale(11,11,true,true);
+        let mut image = SvgImage::load("./src/Icon/minimize.svg").unwrap();
+        image.scale(13,13,true,true);
         min.set_image(Some(image));
         min.set_frame(FrameType::NoBox);
-        min.set_color(Color::from_rgb(180,180,0));
-        min.set_frame(enums::FrameType::OFlatFrame);
+        // min.set_color(Color::from_rgb(180,180,0));
+        // min.set_frame(enums::FrameType::OFlatFrame);
 
         min.clear_visible_focus();
+
         min.set_callback(move |_| println!("Minimize")); 
 
         Self{
@@ -180,7 +183,7 @@ impl LayText{
             receive:     r,
         }
     }
-
+    //############################################
     pub fn layapp(&mut self){
         
         let _menu = lay_menubar::LayMenuBar::new(&self.send);
@@ -196,8 +199,10 @@ impl LayText{
         let mut _mid = lay_menubar::LayBarMid::new();
         let mut _end = lay_menubar::LayBarEnd::new();
 
+        
+
         let mut prev = Button::new(5,75,15,15,None);
-        let mut image = SvgImage::load("./src/mono-navigator-prev.svg").unwrap();
+        let mut image = SvgImage::load("./src/Icon/mono-navigator-prev.svg").unwrap();
         image.scale(13,13,true,true);
         prev.set_image(Some(image));
         prev.set_frame(FrameType::NoBox);
@@ -210,7 +215,7 @@ impl LayText{
             move |w, ev| match ev {
                 enums::Event::Push => {
                     // println!("xpos: {} : Maximum: {} : Minimum: {}",self_grp.xposition(),self_grp.hscrollbar().maximum(),self_grp.hscrollbar().minimum());
-                    if (self_grp.xposition()!=(self_grp.hscrollbar().minimum()) as i32){
+                    if self_grp.xposition()!=(self_grp.hscrollbar().minimum()) as i32 {
                         self_grp.scroll_to(self_grp.xposition()-15,self_grp.yposition());
                     }
                     true
@@ -220,12 +225,12 @@ impl LayText{
                     match app::event_dy(){
 
                         app::MouseWheel::Up => {
-                            if (self_grp.xposition()!=(self_grp.hscrollbar().maximum())as i32){
+                            if self_grp.xposition()!=(self_grp.hscrollbar().maximum())as i32{
                                 self_grp.scroll_to(self_grp.xposition()+15,self_grp.yposition());
                             }
                         }
                         app::MouseWheel::Down => {
-                            if (self_grp.xposition()!=(self_grp.hscrollbar().minimum()) as i32){
+                            if self_grp.xposition()!=(self_grp.hscrollbar().minimum()) as i32{
                                 self_grp.scroll_to(self_grp.xposition()-15,self_grp.yposition());
                             }
                         }
@@ -240,7 +245,7 @@ impl LayText{
         });
         
         let mut next = Button::new(25,75,15,15,None);
-        let mut image = SvgImage::load("./src/mono-navigator-next.svg").unwrap();
+        let mut image = SvgImage::load("./src/Icon/mono-navigator-next.svg").unwrap();
         image.scale(13,13,true,true);
         next.set_image(Some(image));
         next.set_frame(FrameType::NoBox);
@@ -253,7 +258,7 @@ impl LayText{
             move |w, ev| match ev {
                 enums::Event::Push => {
                     // println!("xpos: {} : Maximum: {} : Minimum: {}",self_grp.xposition(),self_grp.hscrollbar().maximum(),self_grp.hscrollbar().minimum());
-                    if (self_grp.xposition()!=(self_grp.hscrollbar().maximum())as i32){
+                    if self_grp.xposition()!=(self_grp.hscrollbar().maximum())as i32 {
                         self_grp.scroll_to(self_grp.xposition()+15,self_grp.yposition());
                     }
                     true
@@ -267,41 +272,44 @@ impl LayText{
         self.main_window.show();
         self.launch();
     }
+    //############################################
+    fn new_tab(&mut self,name:&'static str )-> group::Group {
 
-    fn new_tab(&mut self){
-
-        self.tab_count+=1;
+        let tab = self.tab_count.clone();
         let mut grp = group::Group::new(self.tabs.grp.x(),self.tabs.grp.y(),self.tabs.grp.w(),self.tabs.grp.h(),None);
         grp.set_label_color(Color::from_rgb(255,255,255));
-        grp.set_label(" untitled");
+        grp.set_label(name);
+        self.editors.insert(tab,lay_editor::LayEditor::new(fltk::text::TextBuffer::default(),&self.tabs.grp));
         lay_editor::LayEditor::new(fltk::text::TextBuffer::default(),&self.tabs.grp);
         grp.end();
         self.tabs.add(&mut grp);
+        self.tab_count+=1;
+        grp
         // println!("{}",self.tabs.active_tab.load(Ordering::SeqCst));
     }
-
+    //############################################
     pub fn launch(&mut self){
-
+    
         while self.app.wait(){
-            if let Some(msg) = self.receive.recv(){
+            
+            if let Some(msg) = self.receive.recv() {
                 match msg {
                     // Handle the new file event ##############################################
                     lay_menubar::Message::New => {
-                        self.new_tab();
+                        self.new_tab(" untitled");
                         println!("LayText~> New Tab (Count : \x1b[36m{}\x1b[0m)",self.tab_count);
                         // redraw the window to see the changes
                         self.main_window.redraw();
+                        println!("length :{:?}",self.editors.len() );
                     },
                     lay_menubar::Message::Open =>{
                         print!("LayText~> Opening ... ");
                         let mut chooser = NativeFileChooser::new(FileDialogType::BrowseFile);
                         chooser.show();
-                    }
-                    _=>{
-
-                    }
+                    },
+                    _=>{}
                 }
-            }
+            } 
         }
     }
 }
