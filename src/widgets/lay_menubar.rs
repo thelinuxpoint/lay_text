@@ -7,20 +7,7 @@ use fltk::button::Button;
 use fltk::image::{SvgImage,PngImage};
 use fltk::menu::SysMenuBar;
 
-#[derive(Clone,Copy,Debug)]
-pub enum Message{
-    New,
-    OpenTerm,
-    OpenFolder,
-    Open,
-    Close,
-    Closed(i32),
-    Save,
-    SaveAs,
-    SideBar,
-    Quit,
-    None
-}
+use crate::widgets::Message;
 
 pub struct LayMenuBar{
     pub menu: fltk::menu::SysMenuBar
@@ -28,7 +15,7 @@ pub struct LayMenuBar{
 
 impl LayMenuBar{
     pub fn new(s: &app::Sender<Message>)-> Self{
-        let mut menu_bar = SysMenuBar::new(0,30,900,30,"");
+        let mut menu_bar = SysMenuBar::new(0,0,900,30,"");
         menu_bar.set_frame(FrameType::NoBox); 
         menu_bar.set_text_color(Color::from_rgb(255,255,255));
         menu_bar.set_selection_color(Color::from_rgb(255,0,0));
@@ -159,7 +146,7 @@ pub struct LayBarMid{
 
 impl LayBarMid{
     pub fn new()-> Self{
-        let mut menu_bar = Frame::new(62,626,150,23,"Line 1 Column 1");
+        let mut menu_bar = Frame::new(62,626,150,23,"Line 1, Column 1");
         menu_bar.set_label_size(12);
         menu_bar.set_label_color(Color::from_rgb(255,255,255));
         Self{menu:menu_bar}

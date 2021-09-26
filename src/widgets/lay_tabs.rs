@@ -1,6 +1,7 @@
 // std includes #######################
 use std::sync::Arc;
 use std::sync::atomic::{AtomicI32,Ordering};
+use core::fmt::Debug;
 // fltk includes ######################
 use fltk::prelude::*;
 use fltk::enums::{Color,Align, Event, FrameType,Shortcut};
@@ -13,14 +14,9 @@ use fltk::table::*;
 use fltk::valuator::Scrollbar;
 use fltk::widget::{Widget};
 use fltk;
-
+use std::sync::mpsc::channel;
 //#####################################
-
-
-#[derive(Clone,Copy,Debug)]
-pub enum Close{
-    Closed(i32)
-}
+use crate::messg::Message;
 
 
 pub struct TabButton {
@@ -31,7 +27,7 @@ pub struct TabButton {
 impl TabButton {
     pub fn default() -> Self {
 
-        let mut grp = Group::new(0, 70,150,15, None);
+        let mut grp = Group::new(0, 0,150,15, None);
         let mut but = Button::new(grp.x() + 130, grp.y()+2, 10, 10,None);
         let mut image_cl = SvgImage::load("./src/Icon/close_main.svg").unwrap();
 
@@ -53,22 +49,23 @@ pub struct ClosableTab {
     pub active_tab:Arc<AtomicI32>,
     pub children:i32,
     pub parent_grp:Group,
+    pub s: app::Sender<Message>,
+    pub c: Vec<Group>
 }
 
 impl ClosableTab {
-    pub fn new(x: i32, y: i32, w: i32, h: i32) -> Self {
-
+    pub fn new(x: i32, y: i32, w: i32, h: i32,s: &app::Sender<Message>) -> Self {
         //######################################################################
-        let parent_grp = Group::new(x, y+10, w, h, None);
+        let parent_grp = Group::new(x, y+13, w, h, None);
 
         // let mut rowgr = Row::new(x+48, y+10,w-48,31, None);
-        let mut scrgr = Scroll::new(x+48, y+10,w-48,30, None);
+        let mut scrgr = Scroll::new(x+48, y+13,w-48,30, None);
         scrgr.set_color(Color::from_rgb(24,25,21));
         scrgr.set_scrollbar_size(1);
         scrgr.set_type(ScrollType::None);
         scrgr.hscrollbar().hide();
         
-        let mut pk = Pack::new(x+48, y+10, w-48, 30, None);
+        let mut pk = Pack::new(x+48, y+13, w-48, 30, None);
         pk.set_spacing(3);
         pk.set_type(PackType::Horizontal);
         pk.end();
@@ -142,7 +139,7 @@ impl ClosableTab {
         });
         // rowgr.end();
         // this the group containing text editor
-        let mut grp = Group::new(x, y + 40, w, h, None);
+        let mut grp = Group::new(x, y + 40, w, h-5, None);
         grp.set_color(Color::from_rgb(40,41,35));
         grp.set_frame(FrameType::FlatBox);
         grp.end();
@@ -156,8 +153,11 @@ impl ClosableTab {
             grp, 
             pk ,
             hscroll:scrgr ,
-            active_tab: Arc::new(AtomicI32::new(1)) ,
+            active_tab: Arc::new(AtomicI32::new(0)) ,
             children:0,
+            s:*s ,
+            c: Vec::new(),
+
         }
     }
 
@@ -179,7 +179,7 @@ impl ClosableTab {
         grp.set_label("");
         let mut but = TabButton::default();
         but.grp.set_align(Align::Left | Align::Inside);
-        but.grp.set_label(&label);
+        but.grp.set_label("  untitled");
         but.but.clear_visible_focus();
 
         but.grp.handle({
@@ -231,14 +231,17 @@ impl ClosableTab {
         });
 
         self.pk.add(&but.grp);
+        self.c.push(but.grp);
 
         but.but.set_callback({
             let curr_grp = grp.clone();
             let curr_tab = Arc::clone(&self.active_tab);
             let mut self_grp = self.grp.clone();
             let mut self_pack = self.pk.clone();
+            let x = self.s.clone();
             move |_| {
                 let idx = self_grp.find(&curr_grp);
+                x.send(Message::Closed(idx));
                 self_grp.remove_by_index(idx);
                 self_pack.remove_by_index(idx);
                 if let Some(mut grp) = self_grp.child(self_grp.children() - 1) {
