@@ -71,8 +71,9 @@ impl ClosableTab {
         pk.end();
 
         scrgr.end();
-
-        let mut prev = Button::new(5,75,15,15,None);
+        
+        let mut gp = Group::new(5,42,15,15,None);
+        let mut prev = Button::new(5,42,15,15,None);
         let mut image = SvgImage::load("./src/Icon/mono-navigator-prev.svg").unwrap();
         image.scale(13,13,true,true);
         prev.set_image(Some(image));
@@ -113,7 +114,7 @@ impl ClosableTab {
             }
         });
         
-        let mut next = Button::new(25,75,15,15,None);
+        let mut next = Button::new(25,42,15,15,None);
         let mut image = SvgImage::load("./src/Icon/mono-navigator-next.svg").unwrap();
         image.scale(13,13,true,true);
         next.set_image(Some(image));
@@ -137,6 +138,8 @@ impl ClosableTab {
                 _ => false,
             }
         });
+        gp.end();
+        gp.make_resizable(false);
         // rowgr.end();
         // this the group containing text editor
         let mut grp = Group::new(x, y + 40, w, h-5, None);

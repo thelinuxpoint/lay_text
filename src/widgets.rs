@@ -6,11 +6,12 @@ use std::sync::atomic::{AtomicI32,Ordering};
 //fltk includes ####################
 use fltk;
 use fltk::app;
-use fltk::group::{Group,Pack,PackType,Scroll,ScrollType,Row};
+use fltk::group::{Tabs,Group,Tile,Scroll,VGrid,Pack,PackType};
+use fltk::tree::*;
 use fltk::dialog::{FileChooser,FileChooserType,NativeFileChooser,NativeFileChooserType,FileDialogType};
 use fltk::window::Window;
 use fltk::{prelude::*, *};
-use fltk::enums::{Color,FrameType};
+use fltk::enums::{Color,FrameType,Event};
 use fltk::image::{SvgImage,PngImage};
 use fltk::text::{TextBuffer};
 use fltk::button::Button;
@@ -142,44 +143,38 @@ impl LayText{
         frame.set_label("LayText Editor");
         frame.set_label_font(enums::Font::ScreenBold);
 
-        // let mut close = Button::new(875,10,15,15,None);
-        // let mut image_open = SvgImage::load("./src/Icon/close_main.svg").unwrap();
-        // image_open.scale(12,12,true,true);
-        // close.set_image(Some(image_open));
-        // close.set_frame(FrameType::NoBox);
-        // // close.set_frame(enums::FrameType::OFlatFrame);
-        // // close.set_color(Color::from_rgb(255,0,0));
-        // close.clear_visible_focus();
-        // close.set_callback(move |_| {println!("Closing");app::quit();});
-        // close.redraw(); 
         
-        // let mut max = Button::new(855,10,15,15,None);
-        // let mut image = SvgImage::load("./src/Icon/maximize.svg").unwrap();
-        // image.scale(13,13,true,true);
-        // max.set_image(Some(image));
-        // max.set_frame(FrameType::NoBox);
-        // // max.set_color(Color::from_rgb(0,180,0));
-        // // max.set_frame(enums::FrameType::OFlatFrame);
-        // max.clear_visible_focus();
-        // max.set_callback(move |_| println!("Maximize")); 
+        let mut tile = Tile::new(10,30,890,560,"");
+        let mut tree = Tree::new(0,30,10,560,None);
+        tile.handle(move |_,ev| match ev{
+            Event::Drag =>{
+                app::redraw();
+                return true
+            }
+            _=>{
+                return false
+            }
+        });
 
-        // let mut min = Button::new(835,10,15,15,None);
-        // let mut image = SvgImage::load("./src/Icon/minimize.svg").unwrap();
-        // image.scale(13,13,true,true);
-        // min.set_image(Some(image));
-        // min.set_frame(FrameType::NoBox);
-        // //min.set_color(Color::from_rgb(180,180,0));
-        // // min.set_frame(enums::FrameType::OFlatFrame);
 
-        // min.clear_visible_focus();
+        tree.set_color(Color::from_rgb(24,25,21));
+        tree.set_frame(FrameType::FlatBox);
+        tree.set_scrollbar_size(5);
+        tree.set_root_label("");
+        tree.set_connector_style(TreeConnectorStyle::None);
+        tree.set_select_frame(FrameType::NoBox);
+        tree.clear_visible_focus();
 
-        //  min.set_callback(move |_| println!("Minimize")); 
+        let tmp = lay_tabs::ClosableTab::new(10,30, 900, 560,&s);
+
+        tile.end();
+
 
         Self{
             main_window: lay_window,
             tab_count:   0,
             app:         fltk::app::App::default().with_scheme(app::Scheme::Base),
-            tabs:        lay_tabs::ClosableTab::new(0,30, 900, 560,&s),
+            tabs:        tmp,
             editors:     Vec::new(),
             send:        s,
             receive:     r,
@@ -203,71 +198,7 @@ impl LayText{
         let mut _end = lay_menubar::LayBarEnd::new();
 
 
-        let mut prev = Button::new(5,42,15,15,None);
-        let mut image = SvgImage::load("./src/Icon/mono-navigator-prev.svg").unwrap();
-        image.scale(13,13,true,true);
-        prev.set_image(Some(image));
-        prev.set_frame(FrameType::NoBox);
-        prev.set_color(Color::from_rgb(180,180,0));
-        prev.set_frame(enums::FrameType::NoBox);
-        prev.set_tooltip("Scroll Tabs");
-        prev.clear_visible_focus();
-        prev.handle({
-            let mut self_grp = self.tabs.hscroll.clone();
-            move |w, ev| match ev {
-                enums::Event::Push => {
-                    // println!("xpos: {} : Maximum: {} : Minimum: {}",self_grp.xposition(),self_grp.hscrollbar().maximum(),self_grp.hscrollbar().minimum());
-                    if self_grp.xposition()!=(self_grp.hscrollbar().minimum()) as i32 {
-                        self_grp.scroll_to(self_grp.xposition()-15,self_grp.yposition());
-                    }
-                    true
-                }, 
-                enums::Event::MouseWheel => {
-                    // println!("xpos: {} : Maximum: {} : Minimum: {}",self_grp.xposition(),self_grp.hscrollbar().maximum(),self_grp.hscrollbar().minimum());
-                    match app::event_dy(){
-
-                        app::MouseWheel::Up => {
-                            if self_grp.xposition()!=(self_grp.hscrollbar().maximum())as i32{
-                                self_grp.scroll_to(self_grp.xposition()+15,self_grp.yposition());
-                            }
-                        }
-                        app::MouseWheel::Down => {
-                            if self_grp.xposition()!=(self_grp.hscrollbar().minimum()) as i32{
-                                self_grp.scroll_to(self_grp.xposition()-15,self_grp.yposition());
-                            }
-                        }
-                        _=>{  }
-
-                    }
-
-                    true
-                },
-                _ => false,
-            }
-        });
         
-        let mut next = Button::new(25,42,15,15,None);
-        let mut image = SvgImage::load("./src/Icon/mono-navigator-next.svg").unwrap();
-        image.scale(13,13,true,true);
-        next.set_image(Some(image));
-        next.set_frame(FrameType::NoBox);
-        next.set_color(Color::from_rgb(180,180,0));
-        next.set_frame(enums::FrameType::NoBox);
-        next.set_tooltip("Scroll Tabs");
-        next.clear_visible_focus();
-        next.handle({
-            let mut self_grp = self.tabs.hscroll.clone();
-            move |w, ev| match ev {
-                enums::Event::Push => {
-                    // println!("xpos: {} : Maximum: {} : Minimum: {}",self_grp.xposition(),self_grp.hscrollbar().maximum(),self_grp.hscrollbar().minimum());
-                    if self_grp.xposition()!=(self_grp.hscrollbar().maximum())as i32 {
-                        self_grp.scroll_to(self_grp.xposition()+15,self_grp.yposition());
-                    }
-                    true
-                },
-                _ => false,
-            }
-        });
         let y = self.tabs.grp.clone();
         self.main_window.resizable(&y);
         self.main_window.size_range(600,400,app::screen_size().0 as i32,app::screen_size().1 as i32);
@@ -279,6 +210,7 @@ impl LayText{
     fn new_tab(&mut self,name:&'static str )-> group::Group {
 
         let tab = self.tab_count.clone();
+        println!("{:?}",self.tabs.grp.x());
         let mut grp = group::Group::new(self.tabs.grp.x(),self.tabs.grp.y(),self.tabs.grp.w(),self.tabs.grp.h(),None);
         grp.set_label_color(Color::from_rgb(255,255,255));
         grp.set_label(name);

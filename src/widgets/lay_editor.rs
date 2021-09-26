@@ -20,7 +20,7 @@ impl LayEditor {
     //#######################################################
     pub fn new(buf:fltk::text::TextBuffer,grp:&Group)->Self {
 
-        let mut term = TextEditor::new(0,grp.y(),grp.w(),grp.h(),"");
+        let mut term = TextEditor::new(grp.x(),grp.y(),grp.w(),grp.h(),None);
         term.set_color(Color::from_rgb(40,41,35));
         term.set_buffer(Some(buf));
         term.set_cursor_style(Cursor::Simple);
