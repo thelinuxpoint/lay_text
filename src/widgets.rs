@@ -145,7 +145,7 @@ impl LayText{
 
         
         let mut tile = Tile::new(10,30,890,560,"");
-        let mut tree = Tree::new(0,30,10,560,None);
+        let mut tree = Tree::new(0,30,10,595,None);
         tile.handle(move |_,ev| match ev{
             Event::Drag =>{
                 app::redraw();
@@ -160,12 +160,12 @@ impl LayText{
         tree.set_color(Color::from_rgb(24,25,21));
         tree.set_frame(FrameType::FlatBox);
         tree.set_scrollbar_size(5);
-        tree.set_root_label("");
+        tree.set_root_label("FOLDERS");
         tree.set_connector_style(TreeConnectorStyle::None);
         tree.set_select_frame(FrameType::NoBox);
         tree.clear_visible_focus();
 
-        let tmp = lay_tabs::ClosableTab::new(10,30, 900, 560,&s);
+        let tmp = lay_tabs::ClosableTab::new(10,30, 890, 560,&s);
 
         tile.end();
 

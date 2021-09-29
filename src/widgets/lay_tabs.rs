@@ -56,8 +56,7 @@ pub struct ClosableTab {
 impl ClosableTab {
     pub fn new(x: i32, y: i32, w: i32, h: i32,s: &app::Sender<Message>) -> Self {
         //######################################################################
-        let parent_grp = Group::new(x, y+13, w, h, None);
-
+        let mut parent_grp = Group::new(x, y+13, w, h, None);
         // let mut rowgr = Row::new(x+48, y+10,w-48,31, None);
         let mut scrgr = Scroll::new(x+48, y+13,w-48,30, None);
         scrgr.set_color(Color::from_rgb(24,25,21));
@@ -72,8 +71,9 @@ impl ClosableTab {
 
         scrgr.end();
         
-        let mut gp = Group::new(5,42,15,15,None);
-        let mut prev = Button::new(5,42,15,15,None);
+        let mut gp = Group::new(5,46,15,15,None);
+
+        let mut prev = Button::new(5,46,15,15,None);
         let mut image = SvgImage::load("./src/Icon/mono-navigator-prev.svg").unwrap();
         image.scale(13,13,true,true);
         prev.set_image(Some(image));
@@ -114,7 +114,7 @@ impl ClosableTab {
             }
         });
         
-        let mut next = Button::new(25,42,15,15,None);
+        let mut next = Button::new(25,46,15,15,None);
         let mut image = SvgImage::load("./src/Icon/mono-navigator-next.svg").unwrap();
         image.scale(13,13,true,true);
         next.set_image(Some(image));
@@ -139,12 +139,12 @@ impl ClosableTab {
             }
         });
         gp.end();
-        gp.make_resizable(false);
         // rowgr.end();
         // this the group containing text editor
-        let mut grp = Group::new(x, y + 40, w, h-5, None);
+        let mut grp = Group::new(x, y + 40, w, h-2, None);
         grp.set_color(Color::from_rgb(40,41,35));
         grp.set_frame(FrameType::FlatBox);
+
         grp.end();
 
         parent_grp.end();
