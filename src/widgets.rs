@@ -38,7 +38,6 @@ fn prep_shape() -> image::RgbImage {
 
 fn file_type_changer(arg:&PathBuf,menu:&mut lay_menubar::LayBarEnd){
     if let Some(c) = arg.extension(){
-
         if c=="java"{
             menu.menu.set_label("Java");
         }
@@ -87,6 +86,7 @@ pub struct LayText{
     app:         fltk::app::App,
     editors:     Vec<lay_editor::LayEditor>,  /*editors with automic tab count and mapping*/
     tabs:        lay_tabs::ClosableTab, /**/
+    tree:        Tree,
     send:        fltk::app::Sender<Message>,
     receive:     fltk::app::Receiver<Message>,
 }
@@ -145,7 +145,7 @@ impl LayText{
 
         
         let mut tile = Tile::new(10,30,890,560,"");
-        let mut tree = Tree::new(0,30,10,595,None);
+        let mut tree = Tree::new(0,50,10,575,None);
         tile.handle(move |_,ev| match ev{
             Event::Drag =>{
                 app::redraw();
@@ -175,6 +175,7 @@ impl LayText{
             tab_count:   0,
             app:         fltk::app::App::default().with_scheme(app::Scheme::Base),
             tabs:        tmp,
+            tree:        tree,
             editors:     Vec::new(),
             send:        s,
             receive:     r,
@@ -204,7 +205,7 @@ impl LayText{
         self.main_window.size_range(600,400,app::screen_size().0 as i32,app::screen_size().1 as i32);
         self.main_window.end();
         self.main_window.show();
-        self.launch();
+        self.launch(&mut _end);
     }
     //############################################
     fn new_tab(&mut self,name:&'static str )-> group::Group {
@@ -222,7 +223,7 @@ impl LayText{
         // println!("{}",self.tabs.active_tab.load(Ordering::SeqCst));
     }
     //############################################
-    pub fn launch(&mut self){
+    pub fn launch(&mut self,menu:&mut lay_menubar::LayBarEnd){
         
         while self.app.wait(){
 
@@ -245,7 +246,7 @@ impl LayText{
                             match chooser.filename().file_name(){
                                 Some(_xyz) => {
                                     self.new_tab("");
-                                    self.tabs.c[(self.tabs.children-1) as usize].set_label((String::from("  ")+chooser.filename().file_name().unwrap().to_str().unwrap()).as_str());          
+                                    self.tabs.c[(self.tabs.children-1) as usize].set_label((String::from("  ")+chooser.filename().file_name().unwrap().to_str().unwrap()+"   \u{2713}").as_str());          
 
                                     if let Some(x) = self.editors.get_mut((self.tabs.children-1) as usize) {
                                         x.path = chooser.filename();
@@ -255,6 +256,7 @@ impl LayText{
                                         buf.load_file(chooser.filename());
                                         x.length=buf.length();
                                         x.is_saved = true;
+                                        file_type_changer(&x.path,menu);
                                         app::redraw();
                                         println!("{:?} length : {} bytes",chooser.filename(),buf.length());
                                     }        
@@ -287,7 +289,7 @@ impl LayText{
                                 Some(_xyz) =>{
                                     println!("{:?}",chooser.filename());
                                     if let Some(x) = self.editors.get_mut( self.tabs.active_tab.load(Ordering::SeqCst) as usize) {
-                                        self.tabs.c[self.tabs.active_tab.load(Ordering::SeqCst) as usize].set_label((String::from("  ")+chooser.filename().file_name().unwrap().to_str().unwrap()).as_str());
+                                        self.tabs.c[self.tabs.active_tab.load(Ordering::SeqCst) as usize].set_label((String::from("  ")+chooser.filename().file_name().unwrap().to_str().unwrap()+"   \u{2713}").as_str());
                                         x.path = chooser.filename();
                                         x.is_defined=true;
                                         x.buffer().unwrap().save_file(chooser.filename());
@@ -301,6 +303,7 @@ impl LayText{
                                 }
                             }
                         }
+
                         else {
                             if let Some(x) = self.editors.get_mut( self.tabs.active_tab.load(Ordering::SeqCst) as usize) {                     
                                 x.buffer().unwrap().save_file(x.path.clone());
@@ -311,6 +314,38 @@ impl LayText{
                         }
                     }
                     _=>{}
+                }
+            }
+            //################################################
+            else {
+                match app::event(){
+                    Event::KeyUp => {
+                        if self.editors.len() > 0{
+                            let i = self.tabs.active_tab.load(Ordering::SeqCst);
+                            let mut temp = self.tabs.c[i as usize].label();
+                            temp.pop();
+                            if let Some(x) = self.editors.get_mut(i as usize) {
+                                file_type_changer(&x.path,menu);
+                                let len = x.length;
+                                let buf_len = x.buffer().unwrap().length();
+                                if len!=buf_len {
+                                    temp+="\u{25aa}";
+                                    x.is_saved = false;
+                                    self.tabs.c[i as usize].set_label(temp.as_str());
+                                }
+                                else {
+                                    if len==buf_len && self.editors[i as usize].is_saved{
+                                        temp+="\u{2713}";
+                                        self.tabs.c[i as usize].set_label(temp.as_str());
+                                    }
+                                }
+                                self.tabs.grp.redraw();
+                            }
+                        }
+                    }
+                    _=>{
+
+                    }
                 }
             } 
         }

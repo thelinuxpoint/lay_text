@@ -150,7 +150,7 @@ impl LayText{
         let mut _mid = lay_menubar::LayBarMid::new();
         let mut _end = lay_menubar::LayBarEnd::new();
         let mut tile = Tile::new(0,35,890,542,"");
-        let mut tree = Tree::new(0,35,10,542,None);
+        let mut tree = Tree::new(0,55,10,522,None);
         
 
         tree.set_color(Color::from_rgb(24,25,21));
