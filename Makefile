@@ -5,5 +5,5 @@ push:
 	@cargo build
 	@git add .
 	@git commit -m "Lay Text Editor on Update"
-	@git push -u origin main
+	@git push -u -f origin main
 
