@@ -87,6 +87,7 @@ pub struct LayText{
     editors:     Vec<lay_editor::LayEditor>,  /*editors with automic tab count and mapping*/
     tabs:        lay_tabs::ClosableTab, /**/
     tree:        Tree,
+    tile:        Tile,
     send:        fltk::app::Sender<Message>,
     receive:     fltk::app::Receiver<Message>,
 }
@@ -103,8 +104,7 @@ impl LayText{
         // lay_window.make_resizable(true);
 
         // lay_window.set_frame(FrameType::RoundedBox);
-        let img = PngImage::load("./src/Icon/48x48.png").unwrap();
-        // img.scale(20,20,true,true);
+        let mut img = PngImage::load("./src/Icon/lay.png").unwrap();
         lay_window.set_icon(Some(img));
 
         lay_window.handle({
@@ -145,6 +145,7 @@ impl LayText{
 
         
         let mut tile = Tile::new(10,30,890,560,"");
+
         let mut tree = Tree::new(0,50,10,575,None);
         tile.handle(move |_,ev| match ev{
             Event::Drag =>{
@@ -176,6 +177,7 @@ impl LayText{
             app:         fltk::app::App::default().with_scheme(app::Scheme::Base),
             tabs:        tmp,
             tree:        tree,
+            tile:        tile,
             editors:     Vec::new(),
             send:        s,
             receive:     r,
@@ -194,7 +196,7 @@ impl LayText{
         menu_bar_bottom.set_text_size(13);
         menu_bar_bottom.set_color(Color::from_rgb(19,20,17));
 
-        let _start   = lay_menubar::LayBarStart::new();
+        let mut _start   = lay_menubar::LayBarStart::new(&self.send);
         let mut _mid = lay_menubar::LayBarMid::new();
         let mut _end = lay_menubar::LayBarEnd::new();
 
@@ -233,11 +235,10 @@ impl LayText{
                     Message::New => {
                         self.new_tab("");
                         println!("LayText~> New Tab (Count : \x1b[36m{}\x1b[0m)",self.tab_count);
-
                         // redraw the window to see the changes
                         self.main_window.redraw();
                     },
-
+                    // file opening Protocols ///////////////////////////
                     Message::Open =>{
                         print!("LayText~> Opening ... ");
                         let mut chooser = NativeFileChooser::new(FileDialogType::BrowseFile);
@@ -278,7 +279,6 @@ impl LayText{
 
                     // Saving Protocols ######################################
                     Message::Save => {
-
                         print!("LayText~> Saving ... ");
                         if !self.editors[self.tabs.active_tab.load(Ordering::SeqCst) as usize].is_defined {
                             let mut chooser = NativeFileChooser::new(
@@ -309,9 +309,34 @@ impl LayText{
                                 x.buffer().unwrap().save_file(x.path.clone());
                                 x.length=x.buffer().unwrap().length();
                                 x.is_saved = true;
-                                println!("{:?}",x.path);
                             }
                         }
+                    }
+                    
+                    Message::SideBar(id) =>{
+                        let w=self.main_window.w();
+                        let x0 = self.tabs.parent_grp.x();
+                        let y0 = self.tabs.parent_grp.y();
+
+                        let x = self.tabs.parent_grp.w();
+                        let y = self.tabs.parent_grp.h();
+                        if id==0{
+                            self.tree.resize(0,50,200,self.tabs.grp.h());
+                            self.tree.activate();
+                            self.tabs.parent_grp.resize(200,y0,x-200,y);
+                            self.tabs.parent_grp.redraw();
+                            self.main_window.redraw();
+                            app::redraw();
+                        }
+                        else{
+                            self.tree.resize(0,50,0,self.tabs.grp.h());    
+                            self.tabs.parent_grp.resize(0,y0,w,y);
+                            self.tabs.parent_grp.redraw();
+                            self.tree.deactivate();
+                            self.main_window.redraw();
+                            app::redraw();
+                        }
+
                     }
                     _=>{}
                 }

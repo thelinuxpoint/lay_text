@@ -1,13 +1,17 @@
+use std::sync::Arc;
+use std::sync::atomic::{AtomicI32,Ordering};
+
 use fltk::app;
 use fltk::prelude::*;
 use fltk::menu::*;
-use fltk::enums::{Color,Shortcut,FrameType};
+use fltk::enums::{Color,Event,Font,Shortcut,FrameType};
 use fltk::frame::Frame;
 use fltk::button::Button;
 use fltk::image::{SvgImage,PngImage};
 use fltk::menu::SysMenuBar;
 
 use crate::widgets::Message;
+
 
 pub struct LayMenuBar{
     pub menu: fltk::menu::SysMenuBar
@@ -16,12 +20,13 @@ pub struct LayMenuBar{
 impl LayMenuBar{
     pub fn new(s: &app::Sender<Message>)-> Self{
         let mut menu_bar = SysMenuBar::new(0,0,900,30,"");
-        menu_bar.set_frame(FrameType::NoBox); 
+        menu_bar.set_frame(FrameType::FlatBox);
         menu_bar.set_text_color(Color::from_rgb(255,255,255));
         menu_bar.set_selection_color(Color::from_rgb(255,0,0));
         menu_bar.set_text_size(15);
+        menu_bar.set_text_font(Font::Symbol);
+        menu_bar.set_down_frame(FrameType::FlatBox);
         menu_bar.set_color(Color::from_rgb(24,25,21));
-
         menu_bar.add_emit("&File/New File\t",
             Shortcut::Ctrl | 'n',
             fltk::menu::MenuFlag::Normal,
@@ -37,6 +42,11 @@ impl LayMenuBar{
         menu_bar.add_emit("&File/Open File \t",
             Shortcut::Ctrl | 'o',
             fltk::menu::MenuFlag::Normal,
+            *s,
+            Message::Open
+        );menu_bar.add_emit("&File/Open Recent \t",
+            Shortcut::Ctrl | 'o',
+            fltk::menu::MenuFlag::Submenu,
             *s,
             Message::Open
         );
@@ -114,15 +124,42 @@ pub struct LayBarStart{
     pub stat: bool
 }
 impl LayBarStart{
-    pub fn new()-> Self{
-        let mut sidebar = Button::new(0,632,35,20,"");
+    pub fn new(s: &app::Sender<Message>)-> Self{
+        let mut sidebar = Button::new(0,635,35,20,"");
         let mut image_open = SvgImage::load("./src/Icon/sidebar.svg").unwrap();
-        image_open.scale(16,17,true,true);
-        sidebar.set_image(Some(image_open));
+        image_open.scale(18,18,true,true);
+        
+        let mut image_close = SvgImage::load("./src/Icon/sidebarc.svg").unwrap();
+        image_close.scale(18,18,true,true);
+        
+        sidebar.set_image(Some(image_open.clone()));
         sidebar.set_frame(FrameType::NoBox);
         sidebar.clear_visible_focus();
-        
-        
+        let mut random = Arc::new(AtomicI32::new(0));
+        sidebar.handle({
+            let x = s.clone();
+            let t = random.clone();
+        move |w, ev| 
+            match ev {
+                Event::Push => {
+                    if t.load(Ordering::SeqCst) == 0{                        
+                        t.store(1,Ordering::SeqCst);
+                        w.set_image(Some(image_close.clone()));
+                        x.send(Message::SideBar(t.load(Ordering::SeqCst)));
+                        app::redraw();
+                    }else {
+                        t.store(0,Ordering::SeqCst);
+                        w.set_image(Some(image_open.clone()));
+                        x.send(Message::SideBar(t.load(Ordering::SeqCst))); 
+                        app::redraw();
+
+                    }
+                    true
+                },
+                _=>{false}
+            }
+        });
+
         let mut terminal = Button::new(250,635,35,20,"");
         let mut image = SvgImage::load("./src/Icon/lay-terminal.svg").unwrap();
         image.scale(16,17,true,true);

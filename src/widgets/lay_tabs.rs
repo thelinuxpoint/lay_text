@@ -71,9 +71,9 @@ impl ClosableTab {
 
         scrgr.end();
         
-        let mut gp = Group::new(5,46,15,15,None);
+        let mut gp = Group::new(8,46,15,15,None);
 
-        let mut prev = Button::new(5,46,15,15,None);
+        let mut prev = Button::new(8,46,15,15,None);
         let mut image = SvgImage::load("./src/Icon/mono-navigator-prev.svg").unwrap();
         image.scale(13,13,true,true);
         prev.set_image(Some(image));
@@ -182,7 +182,7 @@ impl ClosableTab {
         grp.set_label("");
         let mut but = TabButton::default();
         but.grp.set_align(Align::Left | Align::Inside);
-        but.grp.set_label("  untitled");
+        but.grp.set_label("  untitled    ");
         but.but.clear_visible_focus();
 
         but.grp.handle({

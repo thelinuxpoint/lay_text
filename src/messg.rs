@@ -8,7 +8,7 @@ pub enum Message{
     Closed(i32),
     Save,
     SaveAs,
-    SideBar,
+    SideBar(i32),
     Quit,
     None
 }

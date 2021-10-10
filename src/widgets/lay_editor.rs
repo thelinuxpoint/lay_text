@@ -25,9 +25,9 @@ impl LayEditor {
         term.set_buffer(Some(buf));
         term.set_cursor_style(Cursor::Simple);
         term.set_text_color(Color::from_rgb(255,255,255));
-        term.set_text_font(Font::ScreenBold);
+        term.set_text_font(Font::Courier);
         term.set_frame(FrameType::NoBox);
-        term.set_text_size(15);
+        term.set_text_size(14);
         term.set_scrollbar_size(10);
         term.set_cursor_color(Color::White);
         term.set_linenumber_width(35); 
